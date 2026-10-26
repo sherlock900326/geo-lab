@@ -1,0 +1,35 @@
+:root { --accent: #dc3327; --accent-light: #ffe363; --text: #111111; --muted: #404040; --border: #111111; --bg: #f7f6f0; --white: #ffffff; }
+body { font-family: Arial, Helvetica, sans-serif; line-height: 1.55; }
+header { background: #111; border-bottom: 0; }
+.header-inner, .masthead-inner, .container { max-width: 1160px; }
+.logo { color: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 1.45rem; text-transform: uppercase; letter-spacing: -.04em; }
+.logo em { color: #ffe363; }
+nav a { color: #fff; }
+.masthead { background: #ffe363; border-bottom: 5px solid #111; padding: 84px 32px; }
+.masthead-inner { grid-template-columns: 1.2fr .8fr; gap: 64px; }
+.masthead-label { color: #111; background: #fff; display: inline-block; padding: 5px 12px; border: 2px solid #111; }
+.masthead h1 { font-family: Arial, Helvetica, sans-serif; font-size: clamp(2.8rem, 6vw, 5.2rem); font-weight: 900; line-height: .98; letter-spacing: -.07em; text-transform: uppercase; }
+.masthead-desc, .masthead-stat { color: #111; }
+.container { padding-top: 58px; }
+.section-header h2 { color: #111; font-size: .9rem; }
+.section-header::after { background: #111; height: 3px; }
+.article-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.article-card { display: block; padding: 26px; border: 3px solid #111; background: #fff; box-shadow: 7px 7px 0 #111; transition: transform .2s, box-shadow .2s; }
+.article-card:nth-child(4n + 2) { background: #d8eff5; }
+.article-card:nth-child(4n + 3) { background: #ffe4dc; }
+.article-card:nth-child(4n + 4) { background: #f1e4ff; }
+.article-card:hover { opacity: 1; transform: translate(4px, 4px); box-shadow: 3px 3px 0 #111; }
+.article-date { display: flex; gap: 6px; text-align: left; margin-bottom: 14px; padding: 0; color: #111; }
+.article-content .tag, .article-header .tag { background: #111; color: #fff; border-radius: 0; }
+.article-content h2 { font-family: Arial, Helvetica, sans-serif; font-size: 1.55rem; font-weight: 900; text-transform: uppercase; }
+.read-more { color: #ad271e; }
+.article-wrap { max-width: 800px; }
+.article-header { border-bottom: 5px solid #111; }
+.article-header h1, .article-body h2 { font-family: Arial, Helvetica, sans-serif; font-weight: 900; }
+.article-body blockquote { border-radius: 0; border: 3px solid #111; background: #ffe363; color: #111; }
+footer { background: #111; border-top: 0; }
+footer p { color: #fff; }
+@media (max-width: 700px) {
+  .masthead-inner, .article-list { grid-template-columns: 1fr; }
+  .masthead { padding: 62px 24px; }
+}

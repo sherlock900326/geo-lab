@@ -1,0 +1,36 @@
+:root { --accent: #9a321f; --accent-light: #f0e6d5; --text: #29251f; --muted: #675f53; --border: #b9ad99; --bg: #f4efe3; --white: #f8f4e9; }
+body { background: var(--bg); }
+header { border-bottom: 4px double var(--text); background: var(--bg); }
+.header-inner, .masthead-inner, .container { max-width: 1180px; }
+.logo { font-size: 1.9rem; text-transform: uppercase; letter-spacing: -0.06em; }
+nav a { color: var(--text); }
+.masthead { padding: 48px 32px; background: var(--bg); border-bottom: 4px double var(--text); }
+.masthead-inner { display: block; text-align: center; }
+.masthead-label { margin-bottom: 12px; color: var(--accent); letter-spacing: .3em; }
+.masthead h1 { max-width: 900px; margin: auto; font-size: clamp(3rem, 6vw, 5.5rem); line-height: .98; letter-spacing: -.06em; }
+.masthead-desc { max-width: 760px; margin: 26px auto 0; font-family: Georgia, serif; font-size: 1.18rem; }
+.masthead-stat { max-width: 760px; margin: 24px auto 0; }
+.container { padding-top: 42px; }
+.section-header { margin-bottom: 18px; }
+.section-header h2 { color: var(--text); letter-spacing: .25em; }
+.article-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 42px; }
+.article-card { grid-template-columns: 66px 1fr; gap: 16px; padding: 30px 0; border-bottom: 1px solid var(--border); }
+.article-card:first-child { grid-column: 1 / -1; grid-template-columns: 110px 1fr; border-top: 2px solid var(--text); border-bottom: 2px solid var(--text); padding: 34px 0; }
+.article-card:first-child h2 { max-width: 920px; font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.1; }
+.article-content h2 { font-size: 1.55rem; letter-spacing: -.03em; }
+.article-content p { font-family: Georgia, serif; font-size: 1rem; }
+.article-content .tag, .article-header .tag { padding: 0; background: transparent; border-bottom: 1px solid currentColor; border-radius: 0; }
+.article-date { color: var(--text); }
+.article-wrap { max-width: 760px; }
+.article-header { border-bottom: 4px double var(--text); }
+.article-header h1 { font-size: clamp(2.4rem, 5vw, 4rem); letter-spacing: -.05em; }
+.article-body { font-size: 1.13rem; }
+.article-body > p:first-child::first-letter { float: left; font-size: 3.5em; line-height: .8; padding: 8px 8px 0 0; color: var(--accent); }
+footer { background: var(--bg); border-top: 4px double var(--text); }
+@media (max-width: 740px) {
+  .masthead h1 { font-size: 2.8rem; }
+  .article-list { grid-template-columns: 1fr; }
+  .article-card:first-child { grid-column: auto; grid-template-columns: 1fr; }
+  .article-card { grid-template-columns: 1fr; }
+  .article-date { text-align: left; }
+}

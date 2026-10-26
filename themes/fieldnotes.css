@@ -1,0 +1,30 @@
+:root { --accent: #326858; --accent-light: #e4eee8; --text: #25352c; --muted: #68796c; --border: #c8d4c6; --bg: #f5f7ee; --white: #f5f7ee; }
+body { background: repeating-linear-gradient(to bottom, #f5f7ee 0, #f5f7ee 35px, #e7eee3 36px); }
+header { background: #e8efe2; border-bottom: 1px dashed var(--accent); }
+.logo { font-style: italic; }
+.masthead { background: transparent; border-bottom: 1px dashed var(--accent); padding: 70px 32px; }
+.masthead-inner { grid-template-columns: 1fr; gap: 20px; max-width: 780px; }
+.masthead h1 { font-size: clamp(2.6rem, 5vw, 4.4rem); font-style: italic; letter-spacing: -.04em; }
+.masthead-desc { font-family: Georgia, serif; font-size: 1.17rem; }
+.masthead-stat { margin-top: 12px; }
+.container { max-width: 850px; }
+.section-header h2 { color: var(--accent); }
+.article-list { margin-left: 105px; border-left: 3px solid var(--accent); }
+.article-card { position: relative; display: block; padding: 30px 0 38px 34px; border-bottom: 1px dashed var(--border); }
+.article-card::before { content: ""; position: absolute; top: 42px; left: -9px; width: 15px; height: 15px; border: 3px solid var(--accent); border-radius: 50%; background: var(--bg); }
+.article-date { position: absolute; top: 34px; left: -126px; width: 90px; text-align: right; padding: 0; color: var(--accent); }
+.article-content .tag, .article-header .tag { padding: 0; background: none; color: var(--accent); }
+.article-content h2 { font-size: 1.55rem; font-style: italic; }
+.article-content p { font-family: Georgia, serif; font-size: 1rem; }
+.read-more { text-decoration: underline; text-underline-offset: 4px; }
+.article-wrap { max-width: 750px; }
+.article-header { border-bottom: 1px dashed var(--accent); }
+.article-header h1 { font-size: clamp(2rem, 4vw, 3rem); font-style: italic; }
+.article-body blockquote { border-style: dashed; }
+footer { background: #e8efe2; border-top: 1px dashed var(--accent); }
+@media (max-width: 620px) {
+  .article-list { margin-left: 10px; }
+  .article-card { padding-left: 24px; }
+  .article-date { position: static; display: flex; gap: 6px; width: auto; margin-bottom: 10px; text-align: left; }
+  .article-card::before { top: 37px; }
+}
