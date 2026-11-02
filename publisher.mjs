@@ -75,7 +75,7 @@ function preflight(slug) {
     run('git', ['ls-files', '--error-unmatch', 'build-site.mjs'], repo);
     if (run('git', ['branch', '--show-current'], repo) !== 'main') throw new Error(`Expected main branch: ${repo}`);
     run('git', ['fetch', 'origin', 'main'], repo);
-    if (run('git', ['rev-parse', 'HEAD'], repo) !== run('git', ['rev-parse', 'origin/main'], repo)) throw new Error(`Local main differs from origin/main: ${repo}`);
+    run('git', ['merge-base', '--is-ancestor', 'origin/main', 'HEAD'], repo);
   }
 }
 
