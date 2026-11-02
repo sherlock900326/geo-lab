@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const primary = dirname(fileURLToPath(import.meta.url));
-const secondary = resolve(process.env.GOODBOOKS_SECONDARY_DIR ?? join(primary, '..', 'goodbooks-secondary-work'));
+const sibling = existsSync(join(primary, '..', 'zengfanblog')) ? 'zengfanblog' : 'goodbooks-secondary-work';
+const secondary = resolve(process.env.GOODBOOKS_SECONDARY_DIR ?? join(primary, '..', sibling));
 const primarySites = ['home', 'geo', 'atlas', 'blocks', 'fieldnotes', 'gallery', 'signal', 'ledger'];
 const secondarySites = ['blog', 'journal', 'archive', 'folio', 'studio', 'type', 'terminal'];
 const sites = [...primarySites, ...secondarySites];

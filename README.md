@@ -4,7 +4,7 @@
 
 ## 首次接入
 
-将本仓库 `geo-lab` 与 `zengfanblog` 克隆到同一目录。默认第二个仓库目录叫 `goodbooks-secondary-work`；也可设置环境变量 `GOODBOOKS_SECONDARY_DIR` 指定路径。需要 Node.js 和具有两个仓库写权限的 Git。
+将本仓库 `geo-lab` 与 `zengfanblog` 克隆到同一目录。工具优先寻找同级的 `zengfanblog`，也支持当前工作目录名 `goodbooks-secondary-work`；还可设置环境变量 `GOODBOOKS_SECONDARY_DIR` 指定路径。需要 Node.js 和具有两个仓库写权限的 Git。
 
 首次必须把两个仓库新增的 `build-site.mjs`、`.gitignore` 及本仓库的 `publisher.mjs` 提交并推送，然后把 Cloudflare Pages 的构建配置改成下表。根目录保持 `/`，生产分支保持 `main`。切换配置前先在本地执行对应构建命令，确认输出目录存在。
 
