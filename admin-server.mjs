@@ -32,6 +32,18 @@ const staticFiles = new Map([
 let publishing = false;
 
 mkdirSync(draftsDirectory, { recursive: true });
+if (existsSync(historyPath)) {
+  const interrupted = JSON.parse(readFileSync(historyPath, 'utf8'));
+  if (interrupted.some(record => record.status === 'sending')) {
+    for (const record of interrupted) {
+      if (record.status === 'sending') {
+        record.status = 'needs_review';
+        record.error = '后台上次运行期间中断；请核对 GitHub 与 Cloudflare 的发布结果。';
+      }
+    }
+    writeFileSync(historyPath, JSON.stringify(interrupted, null, 2) + '\n');
+  }
+}
 
 function respond(response, status, value, contentType = 'application/json; charset=utf-8') {
   response.writeHead(status, {
