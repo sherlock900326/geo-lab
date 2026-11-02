@@ -26,7 +26,13 @@
 | type.goodbooks.cc | zengfanblog | `node build-site.mjs type` | `dist-type` |
 | terminal.goodbooks.cc | zengfanblog | `node build-site.mjs terminal` | `dist-terminal` |
 
-## 发一篇文章
+## 本机网页后台
+
+双击桌面上的 `Goodbooks 发布后台.command`，会在终端启动本机后台并自动打开浏览器。后台地址是 `http://127.0.0.1:4173`；关闭终端窗口即可停止服务。也可以在本仓库运行 `node admin-server.mjs --open`。后台只监听本机地址，不部署到公网。
+
+网页后台支持上传 `.md`、`.txt` 原稿或直接粘贴 Markdown，选择一个或多个域名，为每站编辑独立版本，保存本地草稿，确认后统一发送。发送记录按域名、发送日期、状态筛选。草稿与历史存放在本机 `admin-data/`，不会进入 Git。`已提交` 表示 GitHub 推送成功，Cloudflare Pages 的上线仍需等待其部署完成；`需核查` 表示发布命令失败，可能已有部分仓库推送成功，应先查看错误和 GitHub 状态再重试。
+
+## 命令行发文
 
 在 `geo-lab` 仓库执行：
 
@@ -34,7 +40,7 @@
 node publisher.mjs init my-article-slug
 ```
 
-这会生成 `drafts/my-article-slug/article.json`，以及每站一份 JSON 元数据和 HTML 正文。编辑 15 份内容：`title` 标题、`description` 搜索摘要、`summary` 首页摘要、`category` 分类、`bodyFile` 正文文件。正文可写 `<p>`、`<h2>`、`<ul>` 等 HTML；只放自己信任的内容。`article.json` 里的 `date` 为发布日期，可自行修改。
+这会生成 `drafts/my-article-slug/article.json`，以及每站一份 JSON 元数据和 HTML 正文。可在 `article.json` 的 `sites` 中删除不需要发布的域名，只保留至少一个站点。编辑选中站点的内容：`title` 标题、`description` 搜索摘要、`summary` 首页摘要、`category` 分类、`bodyFile` 正文文件。正文可写 `<p>`、`<h2>`、`<ul>` 等 HTML；只放自己信任的内容。`article.json` 里的 `date` 为发布日期，可自行修改。
 
 ```sh
 node publisher.mjs check drafts/my-article-slug/article.json
@@ -42,6 +48,6 @@ node publisher.mjs prepare drafts/my-article-slug/article.json
 node publisher.mjs publish drafts/my-article-slug/article.json
 ```
 
-`check` 只校验；`prepare` 写入两个仓库并在本地生成 15 站的 `dist-*` 页面，便于预览；`publish` 再次校验、构建，只提交这篇文章在两个仓库中的内容文件，并推送 `main`。Cloudflare Pages 随后自动部署。`publish` 允许此前 `prepare` 生成的同篇内容，但会拒绝其他未提交改动。若第二个仓库推送失败，修复 Git 连接或权限后重试同一命令即可。
+`check` 只校验；`prepare` 写入选中站点所在的仓库并在本地生成对应 `dist-*` 页面，便于预览；`publish` 再次校验、构建，只提交这篇文章在选中站点的内容文件，并推送相关仓库的 `main`。Cloudflare Pages 随后自动部署。`publish` 允许此前 `prepare` 生成的同篇内容，但会拒绝其他未提交改动。若第二个仓库推送失败，修复 Git 连接或权限后重试同一命令即可。
 
 草稿和构建目录不会进入 Git。正式文章内容保存在各站的 `content/<site>/<slug>.json`。新文章会出现在各站首页和 sitemap 中，URL 是 `https://<domain>/posts/<slug>.html`。

@@ -48,10 +48,10 @@ function load(manifestPath) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(manifest.date ?? '') || Number.isNaN(Date.parse(`${manifest.date}T00:00:00Z`)) || new Date(`${manifest.date}T00:00:00Z`).toISOString().slice(0, 10) !== manifest.date) throw new Error('Invalid article date');
   const unknown = Object.keys(manifest.sites ?? {}).filter(site => !sites.includes(site));
   if (unknown.length) throw new Error(`Unknown sites: ${unknown.join(', ')}`);
-  const missing = sites.filter(site => !manifest.sites?.[site]);
-  if (missing.length) throw new Error(`Missing variants: ${missing.join(', ')}`);
+  const selectedSites = sites.filter(site => manifest.sites?.[site]);
+  if (!selectedSites.length) throw new Error('Select at least one site');
   const variants = new Map();
-  for (const site of sites) {
+  for (const site of selectedSites) {
     const variant = JSON.parse(readFileSync(safePath(base, manifest.sites[site]), 'utf8'));
     for (const field of ['title', 'description', 'summary', 'category', 'bodyFile']) {
       if (typeof variant[field] !== 'string' || !variant[field].trim()) throw new Error(`${site}: ${field} is required`);
@@ -63,12 +63,13 @@ function load(manifestPath) {
     variants.set(site, { title: variant.title, description: variant.description, summary: variant.summary,
       category: variant.category, bodyHtml, date: manifest.date });
   }
-  return { manifest, variants };
+  return { manifest, variants, selectedSites };
 }
 
-function preflight(slug) {
+function preflight(slug, selectedSites) {
   for (const repo of [primary, secondary]) {
-    const selected = repo === primary ? primarySites : secondarySites;
+    const selected = selectedSites.filter(site => (repo === primary ? primarySites : secondarySites).includes(site));
+    if (!selected.length) continue;
     const allowed = new Set(selected.map(site => `content/${site}/${slug}.json`));
     const changes = run('git', ['status', '--porcelain', '--untracked-files=all'], repo).split('\n').filter(Boolean);
     if (changes.some(change => !allowed.has(change.slice(3)))) throw new Error(`Repository has unrelated changes: ${repo}`);
@@ -80,7 +81,7 @@ function preflight(slug) {
 }
 
 function prepare(variants, slug) {
-  for (const site of sites) {
+  for (const site of variants.keys()) {
     const repo = primarySites.includes(site) ? primary : secondary;
     const folder = join(repo, 'content', site);
     mkdirSync(folder, { recursive: true });
@@ -89,14 +90,16 @@ function prepare(variants, slug) {
   }
 }
 
-function publish(slug) {
+function publish(slug, selectedSites) {
   for (const repo of [primary, secondary]) {
-    const selected = repo === primary ? primarySites : secondarySites;
+    const selected = selectedSites.filter(site => (repo === primary ? primarySites : secondarySites).includes(site));
+    if (!selected.length) continue;
     for (const site of selected) run('git', ['add', '--', `content/${site}/${slug}.json`], repo);
     if (!run('git', ['diff', '--cached', '--name-only'], repo)) continue;
     run('git', ['-c', 'user.name=sherlock900326', '-c', 'user.email=sherlock900326@users.noreply.github.com', 'commit', '-m', `Publish ${slug}`], repo);
   }
   for (const repo of [primary, secondary]) {
+    if (!selectedSites.some(site => (repo === primary ? primarySites : secondarySites).includes(site))) continue;
     run('git', ['push', 'origin', 'main'], repo);
     console.log(`Pushed ${repo}`);
   }
@@ -106,11 +109,11 @@ const [command, argument] = process.argv.slice(2);
 try {
   if (command === 'init' && argument) init(argument);
   else if (['check', 'prepare', 'publish'].includes(command) && argument) {
-    const { manifest, variants } = load(argument);
+    const { manifest, variants, selectedSites } = load(argument);
     console.log(`Validated ${variants.size} variants for ${manifest.slug}`);
-    if (command === 'publish') preflight(manifest.slug);
+    if (command === 'publish') preflight(manifest.slug, selectedSites);
     if (command !== 'check') prepare(variants, manifest.slug);
-    if (command === 'publish') publish(manifest.slug);
+    if (command === 'publish') publish(manifest.slug, selectedSites);
   } else {
     console.error('Usage: node publisher.mjs init <slug> | check|prepare|publish <draft/article.json>');
     process.exitCode = 1;

@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Goodbooks 内容发布工作台</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">G<span>.</span></span><span class="brand-copy"><strong>Goodbooks</strong><small>CONTENT OPERATIONS</small></span></div>
+      <div class="sidebar-label">工作空间</div>
+      <nav class="main-nav" aria-label="主导航">
+        <button class="nav-item active" data-view="overview"><span class="nav-icon">▦</span>工作台</button>
+        <button class="nav-item" data-view="compose"><span class="nav-icon">✎</span>新建发布</button>
+        <button class="nav-item" data-view="history"><span class="nav-icon">◷</span>发送记录</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="connection"><span class="connection-dot"></span>本机安全连接</div>
+        <div class="sidebar-footnote">发布命令只在这台电脑运行<br>GitHub 推送后由 Cloudflare 部署</div>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar"><div class="breadcrumb">Goodbooks <span>/</span> <strong id="breadcrumb-current">工作台</strong></div><div class="top-actions"><span class="live-pill"><i></i>本地运行中</span><span class="avatar">GB</span></div></header>
+      <main>
+        <section id="view-overview" class="view active">
+          <div class="page-heading"><div><div class="eyebrow">CONTENT COMMAND CENTER</div><h1>内容发布工作台</h1><p>在一个地方管理 Goodbooks 全部站点的文章发布。</p></div><button class="button button-primary" data-go="compose"><span>＋</span> 新建发布</button></div>
+          <div class="hero-banner"><div><div class="hero-kicker"><span class="sparkle">✦</span> 一次管理，多站分发</div><h2>把文章发到合适的站点，<br>让每个版本都恰到好处。</h2><p>上传原稿、选择域名、逐站调整内容，然后统一提交。每个域名保留自己的标题、正文和页面地址。</p><button class="button button-light" data-go="compose">开始创建文章 <span>↗</span></button></div><div class="hero-art" aria-hidden="true"><div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div><div class="art-core">G<span>.</span></div><span class="art-node node-one">01</span><span class="art-node node-two">15</span><span class="art-node node-three">↗</span></div></div>
+          <div class="stats-grid"><div class="stat-card"><span class="stat-icon teal">▦</span><div class="stat-label">可发布站点</div><strong id="stat-sites">15</strong><span class="stat-note">总站 + 子域名</span></div><div class="stat-card"><span class="stat-icon blue">↗</span><div class="stat-label">已提交记录</div><strong id="stat-sent">0</strong><span class="stat-note">按域名独立记录</span></div><div class="stat-card"><span class="stat-icon amber">◷</span><div class="stat-label">本地草稿</div><strong id="stat-drafts">0</strong><span class="stat-note">随时继续编辑</span></div></div>
+          <div class="section-head"><div><h2>最近发送</h2><p>最近的文章分发记录</p></div><button class="text-button" data-go="history">查看全部记录 →</button></div>
+          <div id="recent-history" class="recent-list"></div>
+          <div class="section-head drafts-head"><div><h2>本地草稿</h2><p>尚未发布的文章可以从这里继续编辑</p></div></div>
+          <div id="draft-list" class="draft-list"></div>
+        </section>
+
+        <section id="view-compose" class="view">
+          <div class="page-heading"><div><div class="eyebrow">CREATE & DISTRIBUTE</div><h1>新建发布</h1><p>先上传或填写原稿，再为选中的域名调整各自版本。</p></div><span class="step-badge">内容准备 · 选择站点 · 确认发送</span></div>
+          <div class="compose-layout"><div class="compose-main">
+            <section class="panel"><div class="panel-heading"><span class="step-number">01</span><div><h2>文章基础信息</h2><p>这些信息用于初始化各站版本，之后仍可分别修改。</p></div></div>
+              <div class="field-grid"><label class="field field-wide">文章标题 <span class="required">*</span><input id="base-title" type="text" maxlength="180" placeholder="例如：AI 搜索时代，品牌如何被看见"></label><label class="field">文章链接名 <span class="required">*</span><input id="article-slug" type="text" maxlength="100" placeholder="例如：ai-search-brand-visibility"><small>用于生成 /posts/链接名.html，仅限小写英文、数字和连字符。</small></label><label class="field">发布日期 <span class="required">*</span><input id="article-date" type="date"></label><label class="field">文章分类 <span class="required">*</span><input id="base-category" type="text" maxlength="60" placeholder="例如：研究观察"></label><label class="field">搜索摘要 <span class="required">*</span><input id="base-description" type="text" maxlength="300" placeholder="用于搜索结果的简短说明"></label><label class="field field-wide">首页摘要 <span class="required">*</span><textarea id="base-summary" rows="2" maxlength="400" placeholder="用一两句话介绍文章，显示在站点首页"></textarea></label></div>
+              <div class="upload-box" id="upload-box" tabindex="0" role="button" aria-label="上传文章原稿"><div class="upload-icon">⇧</div><div><strong>上传文章原稿</strong><p>拖拽文件到这里，或<span>点击选择文件</span>。支持 .md 和 .txt，最大 2 MB。</p><small id="upload-name">上传后自动填入正文；也可以直接在下方编辑。</small></div><input id="file-input" type="file" accept=".md,.txt,text/markdown,text/plain" hidden></div>
+              <label class="field body-field">通用原稿 <span class="field-hint">Markdown 或纯文本</span><textarea id="base-markdown" rows="9" placeholder="在这里粘贴文章正文。支持标题、段落、列表、粗体和链接。"></textarea></label>
+            </section>
+            <section class="panel"><div class="panel-heading"><span class="step-number">02</span><div><h2>选择发布域名</h2><p>可选择一个、多个或全部站点。每个选中的站点都能单独编辑。</p></div><span id="selected-count" class="count-pill">15 / 15 已选</span></div><div class="selection-tools"><button id="select-all" class="text-button">全选站点</button><span></span><button id="select-none" class="text-button">清空选择</button></div><div id="site-grid" class="site-grid"></div></section>
+            <section class="panel"><div class="panel-heading"><span class="step-number">03</span><div><h2>各站独立版本</h2><p>切换域名，逐站调整标题、摘要和正文。未修改的站点沿用通用原稿。</p></div></div><div class="variant-workspace"><div id="variant-tabs" class="variant-tabs"></div><div id="variant-editor" class="variant-editor"><div class="variant-top"><div><span class="overline">CURRENT VERSION</span><h3 id="variant-domain">goodbooks.cc</h3></div><span class="version-indicator">独立版本</span></div><div class="field-grid"><label class="field field-wide">站点标题<input id="variant-title" type="text" maxlength="180"></label><label class="field">分类<input id="variant-category" type="text" maxlength="60"></label><label class="field">搜索摘要<input id="variant-description" type="text" maxlength="300"></label><label class="field field-wide">首页摘要<textarea id="variant-summary" rows="2" maxlength="400"></textarea></label></div><div class="editor-head"><span>文章正文</span><div class="segmented"><button id="edit-tab" class="active">编辑</button><button id="preview-tab">预览</button></div></div><textarea id="variant-markdown" class="variant-markdown" rows="13" placeholder="输入这个站点的文章正文"></textarea><div id="variant-preview" class="markdown-preview" hidden></div></div></div></section>
+          </div><aside class="compose-aside"><div class="aside-card"><div class="aside-head">发布概览 <span>◎</span></div><div class="aside-row"><span>目标域名</span><strong id="aside-sites">15 个站点</strong></div><div class="aside-row"><span>文章链接</span><strong id="aside-slug">待填写</strong></div><div class="aside-row"><span>发布日期</span><strong id="aside-date">待设置</strong></div><div class="aside-divider"></div><p>提交后会推送到 GitHub，Cloudflare Pages 随后开始部署。发送记录会保留在本机。</p><button id="save-draft" class="button button-outline full">保存草稿</button><button id="publish-button" class="button button-primary full">检查并发送 <span>→</span></button></div><div class="tip-card"><span>✳</span><div><strong>各站内容可独立</strong><p>同一主题可以给不同域名写不同标题、角度和正文。切换站点时内容会自动保留。</p></div></div></aside></div>
+        </section>
+
+        <section id="view-history" class="view"><div class="page-heading"><div><div class="eyebrow">DELIVERY LOG</div><h1>发送记录</h1><p>按域名、发送时间和状态查找每一次文章分发。</p></div><button class="button button-primary" data-go="compose">＋ 新建发布</button></div><div class="panel history-panel"><div class="history-header"><div><h2>全部记录</h2><p id="history-count">共 0 条记录</p></div><button id="reset-filters" class="text-button">清除筛选</button></div><div class="filter-bar"><label>发布域名<select id="filter-site"><option value="">全部域名</option></select></label><label>开始日期<input id="filter-from" type="date"></label><label>结束日期<input id="filter-to" type="date"></label><label>发送状态<select id="filter-status"><option value="">全部状态</option><option value="submitted">已提交</option><option value="needs_review">需核查</option><option value="sending">发送中</option></select></label></div><div class="table-wrap"><table><thead><tr><th>文章 / 页面</th><th>发布域名</th><th>发送时间</th><th>状态</th><th></th></tr></thead><tbody id="history-body"></tbody></table></div><div id="history-empty" class="empty-state" hidden><span>◷</span><strong>没有符合条件的记录</strong><p>调整筛选条件，或先发送一篇文章。</p></div></div></section>
+      </main>
+    </div>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="confirm-modal" class="modal-backdrop" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-symbol">↗</div><h2 id="modal-title">确认发送文章</h2><p id="modal-summary"></p><div id="modal-sites" class="modal-sites"></div><div class="modal-note">这会提交到 GitHub，并触发所选站点的 Cloudflare 部署。</div><div class="modal-actions"><button id="cancel-publish" class="button button-outline">返回编辑</button><button id="confirm-publish" class="button button-primary">确认发送</button></div></div></div>
+</body>
+</html>
