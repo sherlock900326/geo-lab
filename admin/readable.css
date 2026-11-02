@@ -18,6 +18,16 @@ body { line-height: 1.55; }
 .variant-markdown, .markdown-preview, .field textarea { line-height: 1.75; }
 .field { display: block; }
 .field input, .field textarea, .field small { display: block; margin-top: 7px; }
+.metadata-preview { display: grid; gap: 9px; margin: 18px 0; padding: 16px 18px; border: 1px solid #dbece7; border-radius: 10px; background: #f4faf7; }
+.metadata-preview > strong { color: #087f70; font-size: 14px; }
+.metadata-preview > div { display: flex; gap: 12px; font-size: 14px; }
+.metadata-preview span { flex: none; width: 62px; color: #718797; }
+.metadata-preview b { min-width: 0; color: #293e4f; font-weight: 600; overflow-wrap: anywhere; }
+.optional-details { border-top: 1px solid #e6edf3; padding-top: 15px; }
+.optional-details > summary { color: #087f70; font-size: 14px; font-weight: 700; cursor: pointer; }
+.optional-details[open] > summary { margin-bottom: 17px; }
+.optional-details.panel { padding: 20px 25px; border-top: 1px solid #e6edf3; }
+.optional-details .variant-workspace { margin-top: 15px; }
 .section-head h2, .history-header h2, .panel-heading h2 { font-size: 18px; }
 .hero-banner .button { font-size: 14px; min-height: 39px; }
 .step-number { font-size: 13px; }

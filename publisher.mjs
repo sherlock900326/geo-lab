@@ -11,10 +11,10 @@ const secondarySites = ['blog', 'journal', 'archive', 'folio', 'studio', 'type',
 const sites = [...primarySites, ...secondarySites];
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-function run(command, args, cwd) {
+function run(command, args, cwd, trim = true) {
   const result = spawnSync(command, args, { cwd, encoding: 'utf8' });
   if (result.status !== 0) throw new Error(`${command} ${args.join(' ')} failed in ${cwd}:\n${result.stderr || result.stdout}`);
-  return result.stdout.trim();
+  return trim ? result.stdout.trim() : result.stdout;
 }
 
 function safePath(base, path) {
@@ -71,8 +71,12 @@ function preflight(slug, selectedSites) {
     const selected = selectedSites.filter(site => (repo === primary ? primarySites : secondarySites).includes(site));
     if (!selected.length) continue;
     const allowed = new Set(selected.map(site => `content/${site}/${slug}.json`));
-    const changes = run('git', ['status', '--porcelain', '--untracked-files=all'], repo).split('\n').filter(Boolean);
-    if (changes.some(change => !allowed.has(change.slice(3)))) throw new Error(`Repository has unrelated changes: ${repo}`);
+    const changes = run('git', ['status', '--porcelain', '--untracked-files=all'], repo, false).split('\n').filter(Boolean);
+    if (changes.some(change => {
+      const path = change.slice(3);
+      const localAdminChange = repo === primary && (path === 'README.md' || path === 'admin-server.mjs' || path === 'publisher.mjs' || path.startsWith('admin/'));
+      return ![' ', '?'].includes(change[0]) || (!allowed.has(path) && !localAdminChange);
+    })) throw new Error(`Repository has unrelated changes: ${repo}`);
     run('git', ['ls-files', '--error-unmatch', 'build-site.mjs'], repo);
     if (run('git', ['branch', '--show-current'], repo) !== 'main') throw new Error(`Expected main branch: ${repo}`);
     run('git', ['fetch', 'origin', 'main'], repo);

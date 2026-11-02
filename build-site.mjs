@@ -94,4 +94,5 @@ if (existsSync(contentDirectory)) {
 
 write('index.html', index);
 write('sitemap.xml', sitemap);
+if (site !== 'home') write('robots.txt', `User-agent: *\nAllow: /\nSitemap: https://${domain}/sitemap.xml\n`);
 console.log(`Built ${domain} in ${output}`);

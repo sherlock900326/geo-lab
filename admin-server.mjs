@@ -30,6 +30,8 @@ const staticFiles = new Map([
   ['/readable.css', ['admin/readable.css', 'text/css; charset=utf-8']],
   ['/app.js', ['admin/app.js', 'text/javascript; charset=utf-8']],
   ['/markdown.mjs', ['admin/markdown.mjs', 'text/javascript; charset=utf-8']],
+  ['/article-metadata.mjs', ['admin/article-metadata.mjs', 'text/javascript; charset=utf-8']],
+  ['/article-slug.mjs', ['admin/article-slug.mjs', 'text/javascript; charset=utf-8']],
 ]);
 let publishing = false;
 

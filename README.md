@@ -32,6 +32,8 @@
 
 网页后台支持上传 `.doc`、`.docx`、`.md`、`.txt` 原稿或直接粘贴 Markdown。Word 文件会在本机提取为纯文本，再供你逐站调整格式与内容。可选择一个或多个域名，为每站编辑独立版本，保存本地草稿，确认后统一发送。发送记录按域名、发送日期、状态筛选。草稿与历史存放在本机 `admin-data/`，不会进入 Git。`已提交` 表示 GitHub 推送成功，Cloudflare Pages 的上线仍需等待其部署完成；`需核查` 表示发布命令失败，可能已有部分仓库推送成功，应先查看错误和 GitHub 状态再重试。
 
+快速发布只需上传或粘贴文章、选择站点、确认发送。后台从 Markdown 一级标题或正文首行提取标题，从正文段落提取搜索摘要和首页摘要；分类默认是「文章」，也可从文章开头的 YAML `category` 或「分类」字段读取。发布日期默认为今天，文章链接名自动生成。所有信息仍可在可选设置中修改；按站点单独调整也保留为可选功能。
+
 工作台的站点快捷入口和「站点目录」列出总站与全部子域名，点击域名会在新标签页打开网站。站点目录显示每站最近一次已提交的文章链接；「最近发送」和「发送记录」也可以直接打开对应文章核对部署结果。
 
 ## 命令行发文
@@ -50,6 +52,14 @@ node publisher.mjs prepare drafts/my-article-slug/article.json
 node publisher.mjs publish drafts/my-article-slug/article.json
 ```
 
-`check` 只校验；`prepare` 写入选中站点所在的仓库并在本地生成对应 `dist-*` 页面，便于预览；`publish` 再次校验、构建，只提交这篇文章在选中站点的内容文件，并推送相关仓库的 `main`。Cloudflare Pages 随后自动部署。`publish` 允许此前 `prepare` 生成的同篇内容，但会拒绝其他未提交改动。若第二个仓库推送失败，修复 Git 连接或权限后重试同一命令即可。
+`check` 只校验；`prepare` 写入选中站点所在的仓库并在本地生成对应 `dist-*` 页面，便于预览；`publish` 再次校验、构建，只提交这篇文章在选中站点的内容文件，并推送相关仓库的 `main`。Cloudflare Pages 随后自动部署。`publish` 允许此前 `prepare` 生成的同篇内容及本机后台工具文件的未提交改动，但会拒绝其他未提交改动和暂存区中的改动。若第二个仓库推送失败，修复 Git 连接或权限后重试同一命令即可。
 
 草稿和构建目录不会进入 Git。正式文章内容保存在各站的 `content/<site>/<slug>.json`。新文章会出现在各站首页和 sitemap 中，URL 是 `https://<domain>/posts/<slug>.html`。
+
+## Google 收录
+
+各站构建时会自动更新自己的 `sitemap.xml`，新文章的页面会包含指向本站网址的 canonical 标签；每个站点的 `robots.txt` 也会指向自己的 sitemap。总站另有 `https://goodbooks.cc/sitemap-index.xml`，汇总 15 个站点的 sitemap。发布新文章后，无需逐篇重复提交 sitemap。
+
+首次接入时，在自己的 Google Search Console 中添加 `goodbooks.cc` **网域资源**，按 Google 给出的 TXT 记录完成 DNS 所有权验证，然后提交 `https://goodbooks.cc/sitemap-index.xml`。网域资源覆盖总站及其子域名。如果已经有 URL 前缀资源，也可以分别提交各站的 `https://<域名>/sitemap.xml`。这个 Google 账号验证和 sitemap 提交需要站点所有者完成；本机发布工具没有你的 Google 登录权限。
+
+提交 sitemap 表示让 Google 发现页面，不等于保证收录，也不等于立刻出现在搜索结果。发布记录中的「已提交」只表示 GitHub 推送成功；文章部署完成后，可在 Search Console 的「网址检查」中查看抓取与索引状态，对重要文章手动请求编入索引。Google Indexing API 不适用于这类普通文章，因此发布工具不会向它发送无效请求。

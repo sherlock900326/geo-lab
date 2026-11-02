@@ -1,7 +1,9 @@
 import { renderMarkdown } from '/markdown.mjs';
+import { inferMetadata } from '/article-metadata.mjs';
+import { articleSlug } from '/article-slug.mjs';
 
 const $ = selector => document.querySelector(selector);
-const state = { sites: [], token: '', selectedSites: new Set(), variants: {}, currentSite: 'home', history: [], drafts: [], slugEdited: false };
+const state = { sites: [], token: '', selectedSites: new Set(), variants: {}, currentSite: '', history: [], drafts: [], uploadName: '', fallbackSlug: '' };
 const fields = ['title', 'description', 'summary', 'category', 'markdown'];
 const baseInputs = {
   title: $('#base-title'), description: $('#base-description'), summary: $('#base-summary'),
@@ -22,9 +24,29 @@ function create(tag, className, text) {
 
 function domain(siteId) { return state.sites.find(site => site.id === siteId)?.domain ?? siteId; }
 function base() { return Object.fromEntries(fields.map(field => [field, baseInputs[field].value])); }
-function variant(site) { return { ...base(), ...state.variants[site] }; }
+function variant(site) {
+  const overrides = Object.entries(state.variants[site] ?? {}).filter(([, value]) => value?.trim());
+  return { ...base(), ...Object.fromEntries(overrides) };
+}
 function selected() { return state.sites.map(site => site.id).filter(id => state.selectedSites.has(id)); }
-function localDate() { return new Date().toLocaleDateString('en-CA'); }
+function localDate() {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+function currentSlug(title) {
+  return articleSlug(title, state.fallbackSlug, $('#article-slug').value);
+}
+function resolvedVariant(site) {
+  const values = variant(site);
+  const inferred = inferMetadata(values.markdown, state.uploadName);
+  return Object.fromEntries(fields.map(field => [field, values[field]?.trim() || inferred[field] || '']));
+}
+function updateMetadataPreview() {
+  const inferred = inferMetadata(baseInputs.markdown.value, state.uploadName);
+  $('#detected-title').textContent = baseInputs.title.value.trim() || inferred.title || '上传后自动识别';
+  $('#detected-category').textContent = baseInputs.category.value.trim() || inferred.category;
+  $('#detected-summary').textContent = baseInputs.summary.value.trim() || inferred.summary || '上传后自动提取正文开头';
+}
 
 function toast(message, error = false) {
   const box = $('#toast');
@@ -146,21 +168,22 @@ function showEditor(preview = false) {
 
 function updateAside() {
   $('#aside-sites').textContent = `${state.selectedSites.size} 个站点`;
-  $('#aside-slug').textContent = $('#article-slug').value || '待填写';
+  const title = baseInputs.title.value.trim() || inferMetadata(baseInputs.markdown.value, state.uploadName).title;
+  $('#aside-slug').textContent = title || $('#article-slug').value.trim() ? currentSlug(title) : '自动生成';
   $('#aside-date').textContent = $('#article-date').value || '待设置';
 }
 
 function payload() {
   const variants = {};
-  for (const site of selected()) variants[site] = variant(site);
-  return { slug: $('#article-slug').value.trim(), date: $('#article-date').value,
+  for (const site of selected()) variants[site] = resolvedVariant(site);
+  return { slug: currentSlug(variants[selected()[0]]?.title || ''), date: $('#article-date').value,
     selectedSites: selected(), variants };
 }
 
 function validateForPublish(article) {
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(article.slug)) throw new Error('请填写有效的文章链接名');
-  if (!article.date) throw new Error('请选择发布日期');
   if (!article.selectedSites.length) throw new Error('请至少选择一个发布域名');
+  if (!article.date) throw new Error('请选择发布日期');
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(article.slug)) throw new Error('自动生成链接失败，请刷新页面后重试');
   for (const site of article.selectedSites) {
     for (const field of fields) if (!article.variants[site][field]?.trim()) throw new Error(`${domain(site)} 的${({ title: '标题', description: '搜索摘要', summary: '首页摘要', category: '分类', markdown: '正文' })[field]}还未填写`);
   }
@@ -170,10 +193,13 @@ function resetForm() {
   for (const input of Object.values(baseInputs)) input.value = '';
   $('#article-slug').value = '';
   $('#article-date').value = localDate();
-  state.selectedSites = new Set(state.sites.map(site => site.id));
-  state.variants = {}; state.currentSite = 'home'; state.slugEdited = false;
-  $('#upload-name').textContent = '上传后自动填入正文；也可以直接在下方编辑。';
-  renderSites(); renderVariantTabs(); renderVariantEditor(); updateAside();
+  state.selectedSites = new Set();
+  state.variants = {}; state.currentSite = ''; state.uploadName = '';
+  state.fallbackSlug = `article-${localDate().replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8)}`;
+  $('#article-details').open = false;
+  $('#site-versions').open = false;
+  $('#upload-name').textContent = '上传后自动读取文章内容。';
+  renderSites(); renderVariantTabs(); renderVariantEditor(); updateMetadataPreview(); updateAside();
 }
 
 function loadDraft(draft) {
@@ -182,10 +208,10 @@ function loadDraft(draft) {
   $('#article-date').value = draft.date;
   for (const field of fields) baseInputs[field].value = draft.base?.[field] ?? '';
   state.selectedSites = new Set(draft.selectedSites);
-  state.variants = draft.variants;
+  state.variants = draft.variants ?? {};
   state.currentSite = selected()[0] ?? '';
-  state.slugEdited = true;
-  renderSites(); renderVariantTabs(); renderVariantEditor(); updateAside();
+  state.uploadName = draft.uploadName ?? '';
+  renderSites(); renderVariantTabs(); renderVariantEditor(); updateMetadataPreview(); updateAside();
   view('compose'); toast('已载入本地草稿');
 }
 
@@ -279,19 +305,22 @@ async function upload(file) {
       content = (await api('/api/import', { method: 'POST', body: JSON.stringify({ filename: file.name, data: btoa(binary) }) })).text;
     } else content = await file.text();
   } catch (error) { return toast(error.message, true); }
+  for (const input of Object.values(baseInputs)) if (input !== baseInputs.markdown) input.value = '';
+  $('#article-slug').value = '';
+  state.variants = {};
+  state.fallbackSlug = `article-${localDate().replaceAll('-', '')}-${crypto.randomUUID().slice(0, 8)}`;
   baseInputs.markdown.value = content;
+  state.uploadName = file.name;
   $('#upload-name').textContent = `已导入：${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
-  if (!$('#base-title').value) {
-    $('#base-title').value = file.name.replace(/\.(doc|docx|md|txt)$/i, '').replaceAll('-', ' ');
-    $('#base-title').dispatchEvent(new Event('input'));
-  }
-  renderVariantEditor(); toast('原稿已导入，可继续为各站调整内容');
+  renderVariantTabs(); renderVariantEditor(); updateMetadataPreview(); updateAside();
+  toast('文章已导入，选择站点后即可发送');
 }
 
 async function saveDraft() {
-  const article = { ...payload(), base: base(), variants: state.variants };
+  const article = { ...payload(), base: base(), variants: state.variants, uploadName: state.uploadName };
   try {
-    if (!article.slug) throw new Error('请先填写文章链接名');
+    if (!article.selectedSites.length) throw new Error('请至少选择一个保存草稿的站点');
+    if (!selected().some(site => variant(site).markdown.trim())) throw new Error('请先上传或粘贴文章');
     await api(`/api/drafts/${article.slug}`, { method: 'PUT', body: JSON.stringify(article) });
     toast('草稿已保存到本机'); refreshOverview();
   } catch (error) { toast(error.message, true); }
@@ -325,12 +354,8 @@ function bindEvents() {
   document.querySelectorAll('[data-go]').forEach(button => button.addEventListener('click', () => view(button.dataset.go)));
   for (const field of fields) {
     baseInputs[field].addEventListener('input', () => {
-      if (!state.variants[state.currentSite]?.[field]) variantInputs[field].value = baseInputs[field].value;
-      if (field === 'title' && !state.slugEdited) {
-        const candidate = baseInputs.title.value.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 75);
-        $('#article-slug').value = candidate || `article-${localDate().replaceAll('-', '')}`;
-      }
-      updateAside();
+      if (!Object.hasOwn(state.variants[state.currentSite] ?? {}, field)) variantInputs[field].value = baseInputs[field].value;
+      updateMetadataPreview(); updateAside();
     });
     variantInputs[field].addEventListener('input', () => {
       if (!state.currentSite) return;
@@ -338,9 +363,9 @@ function bindEvents() {
       state.variants[state.currentSite][field] = variantInputs[field].value;
     });
   }
-  $('#article-slug').addEventListener('input', () => { state.slugEdited = true; updateAside(); });
+  $('#article-slug').addEventListener('input', updateAside);
   $('#article-date').addEventListener('change', updateAside);
-  $('#select-all').addEventListener('click', () => { state.selectedSites = new Set(state.sites.map(site => site.id)); if (!state.currentSite) state.currentSite = 'home'; renderSites(); renderVariantTabs(); renderVariantEditor(); updateAside(); });
+  $('#select-all').addEventListener('click', () => { state.selectedSites = new Set(state.sites.map(site => site.id)); if (!state.currentSite) state.currentSite = selected()[0]; renderSites(); renderVariantTabs(); renderVariantEditor(); updateAside(); });
   $('#select-none').addEventListener('click', () => { state.selectedSites.clear(); state.currentSite = ''; renderSites(); renderVariantTabs(); renderVariantEditor(); updateAside(); });
   $('#edit-tab').addEventListener('click', () => showEditor(false));
   $('#preview-tab').addEventListener('click', () => showEditor(true));
