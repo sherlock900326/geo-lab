@@ -27,6 +27,7 @@ const siteIds = new Set(sites.map(site => site.id));
 const staticFiles = new Map([
   ['/', ['admin/index.html', 'text/html; charset=utf-8']],
   ['/styles.css', ['admin/styles.css', 'text/css; charset=utf-8']],
+  ['/readable.css', ['admin/readable.css', 'text/css; charset=utf-8']],
   ['/app.js', ['admin/app.js', 'text/javascript; charset=utf-8']],
   ['/markdown.mjs', ['admin/markdown.mjs', 'text/javascript; charset=utf-8']],
 ]);

@@ -44,21 +44,60 @@ async function api(path, options = {}) {
 }
 
 function view(name) {
-  if (!['overview', 'compose', 'history'].includes(name)) return;
+  if (!['overview', 'sites', 'compose', 'history'].includes(name)) return;
   if (location.hash !== `#${name}`) history.replaceState(null, '', `#${name}`);
   document.querySelectorAll('.view').forEach(element => element.classList.toggle('active', element.id === `view-${name}`));
   document.querySelectorAll('.nav-item').forEach(element => element.classList.toggle('active', element.dataset.view === name));
-  $('#breadcrumb-current').textContent = ({ overview: '工作台', compose: '新建发布', history: '发送记录' })[name];
+  $('#breadcrumb-current').textContent = ({ overview: '工作台', sites: '站点目录', compose: '新建发布', history: '发送记录' })[name];
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'history') refreshHistory();
-  if (name === 'overview') refreshOverview();
+  if (name === 'overview' || name === 'sites') refreshOverview();
+}
+
+function externalLink(url, label, className = 'row-link') {
+  const link = create('a', className, label);
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  return link;
+}
+
+function renderDirectory() {
+  const shortcuts = $('#site-shortcuts');
+  const directory = $('#site-directory');
+  shortcuts.replaceChildren(); directory.replaceChildren();
+  $('#directory-count').textContent = state.sites.length;
+  for (const site of state.sites) {
+    const url = `https://${site.domain}/`;
+    const latest = state.history.find(record => record.site === site.id && record.status === 'submitted');
+    const card = create('article', 'directory-card');
+    const icon = create('span', 'directory-icon', site.id === 'home' ? 'G' : site.domain[0].toUpperCase());
+    const heading = create('div', 'directory-card-heading');
+    heading.append(create('strong', '', site.id === 'home' ? '总站' : site.label), create('span', '', site.id === 'home' ? 'MAIN SITE' : 'SUBDOMAIN'));
+    const title = create('div', 'directory-card-title');
+    title.append(icon, heading);
+    card.append(title, externalLink(url, site.domain + ' ↗', 'directory-domain'));
+    const article = create('div', 'directory-article');
+    if (latest) {
+      article.append(create('span', '', '最近发送文章'), externalLink(latest.url, latest.title + ' ↗', 'directory-article-link'));
+    } else article.append(create('span', '', '暂无本站发送记录'));
+    card.append(article, externalLink(url, '访问网站 ↗', 'directory-open'));
+    directory.append(card);
+
+    const shortcut = create('div', 'site-shortcut');
+    shortcut.append(create('span', 'shortcut-icon', site.id === 'home' ? 'G' : site.domain[0].toUpperCase()));
+    const details = create('div', 'shortcut-details');
+    details.append(create('strong', '', site.id === 'home' ? '总站' : site.label), externalLink(url, site.domain + ' ↗', 'shortcut-domain'));
+    shortcut.append(details); shortcuts.append(shortcut);
+  }
 }
 
 function renderSites() {
   const grid = $('#site-grid');
   grid.replaceChildren();
   for (const site of state.sites) {
-    const label = create('label', `site-option ${state.selectedSites.has(site.id) ? 'selected' : ''}`);
+    const option = create('div', `site-option ${state.selectedSites.has(site.id) ? 'selected' : ''}`);
+    const label = create('label', 'site-choice');
     const input = create('input');
     input.type = 'checkbox'; input.checked = state.selectedSites.has(site.id); input.value = site.id;
     input.addEventListener('change', () => {
@@ -68,8 +107,10 @@ function renderSites() {
       renderSites(); renderVariantTabs(); renderVariantEditor(); updateAside();
     });
     const copy = create('span');
-    copy.append(create('strong', '', site.domain), create('small', '', site.label));
-    label.append(input, copy); grid.append(label);
+    copy.append(create('strong', '', site.id === 'home' ? '总站' : site.label));
+    label.append(input, copy);
+    option.append(label, externalLink(`https://${site.domain}/`, site.domain + ' ↗', 'site-external'));
+    grid.append(option);
   }
   $('#selected-count').textContent = `${state.selectedSites.size} / ${state.sites.length} 已选`;
 }
@@ -159,7 +200,10 @@ function renderRecent() {
     const row = create('div', 'recent-row');
     const copy = create('div', 'row-copy');
     copy.append(create('strong', '', record.title), create('small', '', `${domain(record.site)} · ${statusLabel(record.status)}`));
-    row.append(create('span', 'row-icon', '↗'), copy, create('div', 'row-side', timeLabel(record.sentAt)));
+    const side = create('div', 'row-side');
+    side.append(create('span', '', timeLabel(record.sentAt)));
+    if (record.status === 'submitted') side.append(externalLink(record.url, '查看文章 ↗', 'recent-article-link'));
+    row.append(create('span', 'row-icon', '↗'), copy, side);
     list.append(row);
   }
 }
@@ -187,7 +231,7 @@ async function refreshOverview() {
     $('#stat-sites').textContent = state.sites.length;
     $('#stat-sent').textContent = state.history.filter(record => record.status === 'submitted').length;
     $('#stat-drafts').textContent = state.drafts.length;
-    renderRecent(); renderDrafts();
+    renderRecent(); renderDrafts(); renderDirectory();
   } catch (error) { toast(error.message, true); }
 }
 
@@ -205,12 +249,11 @@ async function refreshHistory() {
       const row = create('tr');
       const article = create('td');
       article.append(create('span', 'table-title', record.title), create('span', 'table-sub', `/posts/${record.slug}.html`));
-      const site = create('td'); site.append(create('span', 'domain-chip', domain(record.site)));
+      const site = create('td'); site.append(externalLink(`https://${domain(record.site)}/`, domain(record.site) + ' ↗', 'domain-chip domain-link'));
       const status = create('td'); status.append(create('span', `status ${record.status}`, statusLabel(record.status)));
       const linkCell = create('td');
       if (record.status === 'submitted') {
-        const link = create('a', 'row-link', '查看页面 ↗');
-        link.href = record.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; linkCell.append(link);
+        linkCell.append(externalLink(record.url, '查看文章 ↗'));
       } else if (record.error) {
         const details = create('button', 'text-button', '查看错误');
         details.addEventListener('click', () => window.alert(record.error));

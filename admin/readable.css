@@ -1,0 +1,67 @@
+:root { font-size: 16px; }
+body { line-height: 1.55; }
+.brand-copy small, .sidebar-label, .sidebar-footnote, .breadcrumb, .connection,
+.live-pill, .avatar, .eyebrow, .overline, .hero-kicker, .stat-note,
+.section-head p, .history-header p, .panel-heading p, .field small,
+.upload-box p, .upload-box small, .aside-card p, .tip-card p,
+.modal-note, .modal-sites span, .empty-state p { font-size: 13px; }
+.nav-item, .button, .text-button, .step-badge, .count-pill,
+.field, .editor-head, .variant-tab, .segmented button, .version-indicator,
+.filter-bar label, .status, .domain-chip, .row-link { font-size: 14px; }
+.page-heading p, .hero-banner p, .stat-label, .row-copy small,
+.row-side, .aside-row, .aside-row strong, .tip-card strong,
+.upload-box strong, .site-option small, .modal p, .toast,
+.empty-inline, .table-sub { font-size: 14px; }
+.row-copy strong, .table-title, .site-option strong { font-size: 15px; }
+.field input, .field textarea, .filter-bar input, .filter-bar select,
+.variant-markdown, .markdown-preview, th, td { font-size: 14px; }
+.variant-markdown, .markdown-preview, .field textarea { line-height: 1.75; }
+.field { display: block; }
+.field input, .field textarea, .field small { display: block; margin-top: 7px; }
+.section-head h2, .history-header h2, .panel-heading h2 { font-size: 18px; }
+.hero-banner .button { font-size: 14px; min-height: 39px; }
+.step-number { font-size: 13px; }
+.site-option { cursor: default; flex-direction: column; align-items: stretch; gap: 3px; padding: 10px 12px; }
+.site-choice { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; cursor: pointer; }
+.site-choice span { min-width: 0; }
+.site-option input { width: 17px; height: 17px; }
+.site-option strong, .site-option small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-external { align-self: flex-start; margin-left: 27px; color: #087f70; font-size: 13px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.site-external:hover, .directory-domain:hover, .directory-article-link:hover,
+.directory-open:hover, .shortcut-domain:hover, .domain-link:hover,
+.recent-article-link:hover { text-decoration: underline; }
+.site-directory-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 15px; color: #253a4c; }
+.site-directory-head strong { font-size: 18px; }
+.site-directory-head > span { color: #738699; font-size: 14px; }
+.site-directory { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.directory-card { min-width: 0; display: flex; flex-direction: column; padding: 20px; border: 1px solid #e1eaf0; border-radius: 13px; background: #fff; box-shadow: 0 4px 16px #263c5209; }
+.directory-card-heading { display: flex; flex-direction: column; min-width: 0; }
+.directory-card-heading strong { font-size: 17px; color: #24394e; }
+.directory-card-heading span { font-size: 12px; font-weight: 700; letter-spacing: .6px; color: #8a9baa; }
+.directory-card-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.directory-icon, .shortcut-icon { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 10px; background: #e8f7f2; color: #087f70; font-size: 19px; font-weight: 800; }
+.directory-domain { margin: 15px 0; color: #087f70; font-size: 15px; font-weight: 700; text-decoration: none; overflow-wrap: anywhere; }
+.directory-article { display: flex; flex-direction: column; gap: 5px; min-height: 64px; padding: 13px 0; border-top: 1px solid #edf2f5; }
+.directory-article span { font-size: 13px; color: #788b9a; }
+.directory-article-link { color: #263b50; font-size: 14px; font-weight: 650; text-decoration: none; overflow-wrap: anywhere; }
+.directory-open { align-self: flex-start; margin-top: auto; color: #087f70; font-size: 14px; font-weight: 700; text-decoration: none; }
+.site-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 30px; }
+.site-shortcut { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 13px 15px; background: #fff; border: 1px solid #e6edf3; border-radius: 10px; }
+.shortcut-icon { width: 37px; height: 37px; font-size: 17px; }
+.shortcut-details { display: flex; flex-direction: column; min-width: 0; }
+.shortcut-details strong { color: #26394d; font-size: 14px; }
+.shortcut-domain { color: #087f70; font-size: 14px; text-decoration: none; overflow-wrap: anywhere; }
+.recent-article-link { display: block; margin-top: 5px; color: #087f70; font-size: 13px; font-weight: 700; text-decoration: none; }
+.domain-link { display: inline-block; text-decoration: none; white-space: nowrap; }
+@media (max-width: 1200px) {
+  .site-directory, .site-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 960px) {
+  .nav-item { font-size: 0; }
+}
+@media (max-width: 680px) {
+  .site-directory, .site-shortcuts { grid-template-columns: 1fr; }
+  .site-option { min-width: 0; }
+  .recent-row { align-items: flex-start; }
+  .row-side { flex: none; max-width: 40%; }
+}
