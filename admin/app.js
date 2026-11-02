@@ -224,12 +224,24 @@ async function refreshHistory() {
 
 async function upload(file) {
   if (!file) return;
-  if (!/\.(md|txt)$/i.test(file.name)) return toast('只支持 .md 或 .txt 文件', true);
-  if (file.size > 2_000_000) return toast('文件不能超过 2 MB', true);
-  const content = await file.text();
+  if (!/\.(doc|docx|md|txt)$/i.test(file.name)) return toast('支持 Word、Markdown、TXT 文件', true);
+  const word = /\.(doc|docx)$/i.test(file.name);
+  if (file.size > (word ? 5_000_000 : 2_000_000)) return toast(`文件不能超过 ${word ? 5 : 2} MB`, true);
+  let content;
+  try {
+    if (word) {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      let binary = '';
+      for (let offset = 0; offset < bytes.length; offset += 16_384) binary += String.fromCharCode(...bytes.subarray(offset, offset + 16_384));
+      content = (await api('/api/import', { method: 'POST', body: JSON.stringify({ filename: file.name, data: btoa(binary) }) })).text;
+    } else content = await file.text();
+  } catch (error) { return toast(error.message, true); }
   baseInputs.markdown.value = content;
   $('#upload-name').textContent = `已导入：${file.name} · ${(file.size / 1024).toFixed(1)} KB`;
-  if (!$('#base-title').value) $('#base-title').value = file.name.replace(/\.(md|txt)$/i, '').replaceAll('-', ' ');
+  if (!$('#base-title').value) {
+    $('#base-title').value = file.name.replace(/\.(doc|docx|md|txt)$/i, '').replaceAll('-', ' ');
+    $('#base-title').dispatchEvent(new Event('input'));
+  }
   renderVariantEditor(); toast('原稿已导入，可继续为各站调整内容');
 }
 

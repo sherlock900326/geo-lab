@@ -1,9 +1,10 @@
 import { createServer } from 'node:http';
-import { readFileSync, existsSync, mkdirSync, readdirSync, renameSync, writeFileSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import { renderMarkdown } from './admin/markdown.mjs';
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -95,7 +96,7 @@ async function readJson(request) {
   let body = '';
   for await (const chunk of request) {
     body += chunk;
-    if (body.length > 10_000_000) throw new Error('文章数据超过 10 MB');
+    if (body.length > 12_000_000) throw new Error('文章数据超过 12 MB');
   }
   return JSON.parse(body);
 }
@@ -185,6 +186,19 @@ const server = createServer(async (request, response) => {
     if (['POST', 'PUT'].includes(request.method)) {
       if (request.headers['x-admin-token'] !== token || request.headers.origin !== `http://127.0.0.1:${port}`) return respond(response, 403, { error: '无效的本机请求' });
       const body = await readJson(request);
+      if (request.method === 'POST' && url.pathname === '/api/import') {
+        if (!/^.{1,160}\.(doc|docx)$/i.test(body.filename ?? '') || !/^[A-Za-z0-9+/=]+$/.test(body.data ?? '')) return respond(response, 400, { error: '仅支持 .doc 或 .docx Word 文件' });
+        const bytes = Buffer.from(body.data, 'base64');
+        if (!bytes.length || bytes.length > 5_000_000) return respond(response, 400, { error: 'Word 文件不能超过 5 MB' });
+        const folder = mkdtempSync(join(tmpdir(), 'goodbooks-import-'));
+        try {
+          const source = join(folder, `upload.${body.filename.toLowerCase().endsWith('.docx') ? 'docx' : 'doc'}`);
+          writeFileSync(source, bytes);
+          const result = spawnSync('/usr/bin/textutil', ['-convert', 'txt', '-stdout', source], { encoding: 'utf8', maxBuffer: 8_000_000 });
+          if (result.status !== 0 || !result.stdout?.trim()) throw new Error('Word 文件无法转换为文本，请检查文件内容');
+          return respond(response, 200, { text: result.stdout.trim() });
+        } finally { rmSync(folder, { recursive: true, force: true }); }
+      }
       if (request.method === 'PUT' && draftMatch) {
         if (body.slug !== draftMatch[1]) return respond(response, 400, { error: '文章链接名不匹配' });
         validateDraft(body);
