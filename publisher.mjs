@@ -44,7 +44,7 @@ function load(manifestPath) {
   const base = dirname(resolve(manifestPath));
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
   if (!slugPattern.test(manifest.slug ?? '')) throw new Error('Invalid article slug');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(manifest.date ?? '') || Number.isNaN(Date.parse(`${manifest.date}T00:00:00Z`))) throw new Error('Invalid article date');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(manifest.date ?? '') || Number.isNaN(Date.parse(`${manifest.date}T00:00:00Z`)) || new Date(`${manifest.date}T00:00:00Z`).toISOString().slice(0, 10) !== manifest.date) throw new Error('Invalid article date');
   const unknown = Object.keys(manifest.sites ?? {}).filter(site => !sites.includes(site));
   if (unknown.length) throw new Error(`Unknown sites: ${unknown.join(', ')}`);
   const missing = sites.filter(site => !manifest.sites?.[site]);
@@ -73,6 +73,8 @@ function preflight(slug) {
     if (changes.some(change => !allowed.has(change.slice(3)))) throw new Error(`Repository has unrelated changes: ${repo}`);
     run('git', ['ls-files', '--error-unmatch', 'build-site.mjs'], repo);
     if (run('git', ['branch', '--show-current'], repo) !== 'main') throw new Error(`Expected main branch: ${repo}`);
+    run('git', ['fetch', 'origin', 'main'], repo);
+    if (run('git', ['rev-parse', 'HEAD'], repo) !== run('git', ['rev-parse', 'origin/main'], repo)) throw new Error(`Local main differs from origin/main: ${repo}`);
   }
 }
 
