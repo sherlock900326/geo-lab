@@ -93,7 +93,7 @@ function publish(slug) {
     const selected = repo === primary ? primarySites : secondarySites;
     for (const site of selected) run('git', ['add', '--', `content/${site}/${slug}.json`], repo);
     if (!run('git', ['diff', '--cached', '--name-only'], repo)) continue;
-    run('git', ['commit', '-m', `Publish ${slug}`], repo);
+    run('git', ['-c', 'user.name=sherlock900326', '-c', 'user.email=sherlock900326@users.noreply.github.com', 'commit', '-m', `Publish ${slug}`], repo);
   }
   for (const repo of [primary, secondary]) {
     run('git', ['push', 'origin', 'main'], repo);
