@@ -56,6 +56,7 @@ sitemap = sitemap.replace(/(<loc>https:\/\/[^<]+\/posts\/[^<]+)\.html(<\/loc>)/g
 for (const name of readdirSync(join(output, 'posts')).filter(name => name.endsWith('.html'))) {
   const path = join(output, 'posts', name);
   const article = readFileSync(path, 'utf8')
+    .replaceAll(`https://${oldDomain}/`, `https://${domain}/`)
     .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="https://${domain}/posts/${name.slice(0, -5)}">`);
   writeFileSync(path, article);
 }
