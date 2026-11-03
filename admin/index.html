@@ -19,6 +19,7 @@
         <button class="nav-item" data-view="sites"><span class="nav-icon">⌘</span>站点目录</button>
         <button class="nav-item" data-view="compose"><span class="nav-icon">✎</span>新建发布</button>
         <button class="nav-item" data-view="history"><span class="nav-icon">◷</span>发送记录</button>
+        <button class="nav-item" data-view="google"><span class="nav-icon">◎</span>Google 收录</button>
       </nav>
       <div class="sidebar-bottom">
         <div class="connection"><span class="connection-dot"></span>本机安全连接</div>
@@ -58,6 +59,19 @@
         </section>
 
         <section id="view-history" class="view"><div class="page-heading"><div><div class="eyebrow">DELIVERY LOG</div><h1>发送记录</h1><p>按域名、发送时间和状态查找每一次文章分发。</p></div><button class="button button-primary" data-go="compose">＋ 新建发布</button></div><div class="panel history-panel"><div class="history-header"><div><h2>全部记录</h2><p id="history-count">共 0 条记录</p></div><button id="reset-filters" class="text-button">清除筛选</button></div><div class="filter-bar"><label>发布域名<select id="filter-site"><option value="">全部域名</option></select></label><label>开始日期<input id="filter-from" type="date"></label><label>结束日期<input id="filter-to" type="date"></label><label>发送状态<select id="filter-status"><option value="">全部状态</option><option value="submitted">已提交</option><option value="needs_review">需核查</option><option value="sending">发送中</option></select></label></div><div class="table-wrap"><table><thead><tr><th>文章 / 页面</th><th>发布域名</th><th>发送时间</th><th>状态</th><th></th></tr></thead><tbody id="history-body"></tbody></table></div><div id="history-empty" class="empty-state" hidden><span>◷</span><strong>没有符合条件的记录</strong><p>调整筛选条件，或先发送一篇文章。</p></div></div></section>
+
+        <section id="view-google" class="view">
+          <div class="page-heading"><div><div class="eyebrow">SEARCH CONSOLE</div><h1>Google 收录</h1><p>集中管理 15 站文章网址、站点地图提交与实际索引状态。</p></div></div>
+          <div class="panel google-panel"><div class="google-toolbar"><div><h2>Google 连接</h2><p id="google-connection">正在读取连接状态…</p></div><div class="google-actions"><button id="google-config" class="button button-outline">导入 OAuth 客户端</button><input id="google-client-file" type="file" accept=".json,application/json" hidden><button id="google-connect" class="button button-outline">连接 Google</button></div></div>
+            <p class="google-note">首次使用：在 Google Cloud 创建桌面应用 OAuth 客户端并启用 Search Console API，下载 JSON 后点击“导入 OAuth 客户端”，再连接已验证 goodbooks.cc 的 Google 账号。凭据仅保存在本机；提交地图不保证收录。</p>
+            <div class="google-actions"><button id="google-submit" class="button button-primary">提交 15 站地图</button><button id="google-sitemaps" class="button button-outline">检查地图读取</button><button id="google-inspect" class="button button-outline">检查全部文章收录</button><button id="google-refresh" class="text-button">刷新状态</button></div>
+            <p id="google-job" class="google-job"></p>
+          </div>
+          <div class="panel google-panel"><h2>15 站地图状态</h2><div class="table-wrap"><table><thead><tr><th>站点</th><th>Google 地图状态</th><th>上次读取</th><th>详情</th></tr></thead><tbody id="google-sitemap-body"></tbody></table></div></div>
+          <div class="panel google-panel"><div class="google-toolbar"><div><h2>文章网址清单</h2><p id="google-count">正在整理…</p></div><label class="google-filter">站点 <select id="google-site"><option value="">全部站点</option></select></label><label class="google-filter">状态 <select id="google-status"><option value="">全部状态</option><option value="indexed">已收录</option><option value="not_indexed">未收录</option><option value="unknown">状态不明</option><option value="unchecked">未检查</option><option value="error">检查失败</option></select></label><a class="button button-outline" href="/api/google/export">导出 CSV</a></div>
+            <div class="table-wrap"><table><thead><tr><th>文章网址</th><th>域名</th><th>Google 状态</th><th>上次抓取</th><th>检查时间</th></tr></thead><tbody id="google-body"></tbody></table></div>
+          </div>
+        </section>
       </main>
     </div>
   </div>

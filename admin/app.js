@@ -3,7 +3,7 @@ import { inferMetadata } from '/article-metadata.mjs';
 import { articleSlug } from '/article-slug.mjs';
 
 const $ = selector => document.querySelector(selector);
-const state = { sites: [], token: '', selectedSites: new Set(), variants: {}, currentSite: '', history: [], drafts: [], uploadName: '', fallbackSlug: '' };
+const state = { sites: [], token: '', selectedSites: new Set(), variants: {}, currentSite: '', history: [], drafts: [], uploadName: '', fallbackSlug: '', google: null };
 const fields = ['title', 'description', 'summary', 'category', 'markdown'];
 const baseInputs = {
   title: $('#base-title'), description: $('#base-description'), summary: $('#base-summary'),
@@ -66,14 +66,71 @@ async function api(path, options = {}) {
 }
 
 function view(name) {
-  if (!['overview', 'sites', 'compose', 'history'].includes(name)) return;
+  if (!['overview', 'sites', 'compose', 'history', 'google'].includes(name)) return;
   if (location.hash !== `#${name}`) history.replaceState(null, '', `#${name}`);
   document.querySelectorAll('.view').forEach(element => element.classList.toggle('active', element.id === `view-${name}`));
   document.querySelectorAll('.nav-item').forEach(element => element.classList.toggle('active', element.dataset.view === name));
-  $('#breadcrumb-current').textContent = ({ overview: '工作台', sites: '站点目录', compose: '新建发布', history: '发送记录' })[name];
+  $('#breadcrumb-current').textContent = ({ overview: '工作台', sites: '站点目录', compose: '新建发布', history: '发送记录', google: 'Google 收录' })[name];
   window.scrollTo({ top: 0, behavior: 'smooth' });
   if (name === 'history') refreshHistory();
+  if (name === 'google') refreshGoogle();
   if (name === 'overview' || name === 'sites') refreshOverview();
+}
+
+function renderGoogle() {
+  const data = state.google;
+  if (!data) return;
+  $('#google-connection').textContent = data.connected ? '已连接 Google Search Console' : data.configured ? 'OAuth 已配置，等待连接 Google' : '未配置 OAuth 客户端';
+  $('#google-connect').hidden = data.connected;
+  $('#google-submit').disabled = !data.connected || data.busy;
+  $('#google-sitemaps').disabled = !data.connected || data.busy;
+  $('#google-inspect').disabled = !data.connected || data.busy;
+  const submittedMaps = Object.values(data.submissions ?? {}).filter(item => item.status === 'submitted').length;
+  const job = data.job;
+  $('#google-job').textContent = job ? `${({ inspect: '收录检查', sitemaps: '地图读取检查', submit: '地图提交', publish: '发布后地图提交' })[job.kind]}：${job.done} / ${job.total}，错误 ${job.errors}${data.busy ? '，运行中' : '，已结束'}${job.error ? '；' + job.error : ''}` : '';
+  const sitemapBody = $('#google-sitemap-body'); sitemapBody.replaceChildren();
+  for (const item of state.sites) {
+    const detail = data.submissions?.[item.id];
+    const row = create('tr');
+    const label = ({ submitted: '已提交，待读取', read: '已读取', pending: '读取中', error: '读取失败' })[detail?.status] ?? '未检查';
+    const link = create('td'); link.append(externalLink(`https://${item.domain}/sitemap.xml`, item.domain, 'google-url'));
+    row.append(link, create('td', '', label), create('td', '', detail?.lastDownloaded ? timeLabel(detail.lastDownloaded) : '—'), create('td', '', detail?.error ?? (detail?.errors ? `${detail.errors} 个错误` : '—')));
+    sitemapBody.append(row);
+  }
+  const site = $('#google-site').value;
+  const status = $('#google-status').value;
+  const articles = data.articles.filter(item => (!site || item.site === site) && (!status || item.status === status));
+  const indexed = data.articles.filter(item => item.status === 'indexed').length;
+  const unchecked = data.articles.filter(item => item.status === 'unchecked').length;
+  $('#google-count').textContent = `共 ${data.articles.length} 篇；已收录 ${indexed}，未检查 ${unchecked}；已提交地图 ${submittedMaps} / 15。当前显示 ${articles.length} 篇。`;
+  const body = $('#google-body'); body.replaceChildren();
+  for (const article of articles) {
+    const row = create('tr');
+    const link = create('td');
+    link.append(externalLink(article.url, article.url, 'google-url'));
+    const label = ({ indexed: '已收录', not_indexed: '未收录', unknown: '状态不明', unchecked: '未检查', error: '检查失败' })[article.status] ?? article.status;
+    const stateCell = create('td', '', label);
+    if (article.coverage) stateCell.title = article.coverage;
+    if (article.error) stateCell.title = article.error;
+    row.append(link, create('td', '', article.domain), stateCell,
+      create('td', '', article.lastCrawl ? timeLabel(article.lastCrawl) : '—'),
+      create('td', '', article.checkedAt ? timeLabel(article.checkedAt) : '—'));
+    body.append(row);
+  }
+}
+
+async function refreshGoogle() {
+  try {
+    state.google = await api('/api/google');
+    renderGoogle();
+  } catch (error) { toast(error.message, true); }
+}
+
+async function startGoogleJob(kind) {
+  try {
+    await api(`/api/google/${kind}`, { method: 'POST', body: JSON.stringify({ sites: state.sites.map(site => site.id) }) });
+    await refreshGoogle();
+  } catch (error) { toast(error.message, true); }
 }
 
 function externalLink(url, label, className = 'row-link') {
@@ -383,6 +440,30 @@ function bindEvents() {
   $('#confirm-modal').addEventListener('click', event => { if (event.target.id === 'confirm-modal') $('#confirm-modal').hidden = true; });
   for (const id of ['#filter-site', '#filter-from', '#filter-to', '#filter-status']) $(id).addEventListener('change', refreshHistory);
   $('#reset-filters').addEventListener('click', () => { for (const id of ['#filter-site', '#filter-from', '#filter-to', '#filter-status']) $(id).value = ''; refreshHistory(); });
+  $('#google-site').addEventListener('change', renderGoogle);
+  $('#google-status').addEventListener('change', renderGoogle);
+  $('#google-refresh').addEventListener('click', refreshGoogle);
+  $('#google-submit').addEventListener('click', () => startGoogleJob('submit'));
+  $('#google-sitemaps').addEventListener('click', () => startGoogleJob('sitemaps'));
+  $('#google-inspect').addEventListener('click', () => startGoogleJob('inspect'));
+  $('#google-connect').addEventListener('click', async () => {
+    try {
+      const { url } = await api('/api/google/connect', { method: 'POST', body: '{}' });
+      window.location.assign(url);
+    } catch (error) { toast(error.message, true); }
+  });
+  $('#google-config').addEventListener('click', () => $('#google-client-file').click());
+  $('#google-client-file').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    if (!file) return;
+    try {
+      if (file.size > 100_000) throw new Error('OAuth 客户端 JSON 文件过大');
+      await api('/api/google/config', { method: 'POST', body: await file.text() });
+      toast('OAuth 客户端已导入本机'); await refreshGoogle();
+    } catch (error) { toast(error.message, true); }
+    event.target.value = '';
+  });
+  setInterval(() => { if (location.hash === '#google') refreshGoogle(); }, 5000);
 }
 
 try {
@@ -391,6 +472,7 @@ try {
   const filter = $('#filter-site');
   for (const site of state.sites) {
     const option = create('option', '', site.domain); option.value = site.id; filter.append(option);
+    const googleOption = create('option', '', site.domain); googleOption.value = site.id; $('#google-site').append(googleOption);
   }
   bindEvents(); resetForm(); view(location.hash.slice(1) || 'overview'); refreshOverview();
 } catch (error) { toast(`后台连接失败：${error.message}`, true); }

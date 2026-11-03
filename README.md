@@ -60,6 +60,14 @@ node publisher.mjs publish drafts/my-article-slug/article.json
 
 各站构建时会自动更新自己的 `sitemap.xml`，新文章的页面会包含指向本站最终网址的 canonical 标签；每个站点的 `robots.txt` 也会指向自己的 sitemap。总站另有 `https://goodbooks.cc/sitemap-index.xml`，汇总 15 个站点的 sitemap。发布新文章后，无需逐篇重复提交 sitemap。
 
-首次接入时，在自己的 Google Search Console 中添加 `goodbooks.cc` **网域资源**，按 Google 给出的 TXT 记录完成 DNS 所有权验证，然后提交 `https://goodbooks.cc/sitemap-index.xml`。网域资源覆盖总站及其子域名。如果已经有 URL 前缀资源，也可以分别提交各站的 `https://<域名>/sitemap.xml`。这个 Google 账号验证和 sitemap 提交需要站点所有者完成；本机发布工具没有你的 Google 登录权限。
+首次接入时，在 Google Search Console 添加 `goodbooks.cc` **网域资源**并验证所有权。网域资源覆盖总站及其子域名。后台的「Google 收录」页自动汇总 15 站文章网址，提供 CSV 导出；总站原有文章也进入总站 sitemap。
 
-提交 sitemap 表示让 Google 发现页面，不等于保证收录，也不等于立刻出现在搜索结果。发布记录中的「已提交」只表示 GitHub 推送成功；文章部署完成后，可在 Search Console 的「网址检查」中查看抓取与索引状态，对重要文章手动请求编入索引。Google Indexing API 不适用于这类普通文章，因此发布工具不会向它发送无效请求。
+要让本机后台读取 Google 的实际索引状态，需要一次性连接 Search Console API：
+
+1. 在 Google Cloud Console 创建项目，启用 **Google Search Console API**，配置 OAuth 同意屏幕。若应用处于测试状态，把自己的 Google 账号加入测试用户。
+2. 创建 OAuth 客户端，应用类型选 **桌面应用**，下载 JSON。在后台「Google 收录」页点击「导入 OAuth 客户端」，选择该文件；再点击「连接 Google」，使用拥有 `goodbooks.cc` 网域资源的账号授权。
+3. 连接后，后台会依次向 Search Console 提交 15 个独立站点地图、读取地图状态、检查清单中的文章索引状态。后续每次发文，后台等页面出现在对应 sitemap 后再次提交该站地图；后台运行时每天检查文章索引状态。也可在页面手动重查或导出清单。
+
+OAuth 客户端、访问令牌和检查结果仅保存在本机 `admin-data/`（Git 忽略此目录）。本机后台需要持续运行，定时检查才会执行。Google API 返回的「已收录」「未收录」「检查失败」分别展示，不会把发布成功或地图提交成功算作已收录。
+
+提交 sitemap 表示让 Google 发现页面，不等于保证收录，也不等于立刻出现在搜索结果。发布记录中的「已提交」只表示 GitHub 推送成功。Google Indexing API 仅支持特定结构化内容，不适用于这些普通文章；Search Console API 可以查询索引状态和提交站点地图，但没有为普通文章提供逐篇请求收录的 API。

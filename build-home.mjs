@@ -37,7 +37,10 @@ writeFileSync(join(outputDirectory, "style.css"), baseStyle + "\n" + homeStyle);
 
 writeFileSync(
   join(outputDirectory, "sitemap.xml"),
-  '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://goodbooks.cc/</loc></url>\n</urlset>\n',
+  '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://goodbooks.cc/</loc></url>\n'
+    + readdirSync(postsDirectory).filter(name => name.endsWith('.html'))
+      .map(name => `  <url><loc>https://goodbooks.cc/posts/${name.slice(0, -5)}</loc></url>`).join('\n')
+    + '\n</urlset>\n',
 );
 const sitemapDomains = [
   "goodbooks.cc", "geo.goodbooks.cc", "atlas.goodbooks.cc", "blocks.goodbooks.cc",

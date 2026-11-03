@@ -75,3 +75,4 @@ body { line-height: 1.55; }
   .recent-row { align-items: flex-start; }
   .row-side { flex: none; max-width: 40%; }
 }
+.google-panel{padding:24px;margin-bottom:18px}.google-toolbar{display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap}.google-toolbar h2{font-size:19px;margin:0 0 5px}.google-toolbar p{margin:0;color:#718395}.google-note{color:#607487;line-height:1.7;margin:18px 0}.google-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.google-job{margin:15px 0 0;color:#506879}.google-filter{display:flex;align-items:center;gap:8px;color:#5b7082}.google-filter select{font:inherit;padding:9px;border:1px solid #d8e2ea;border-radius:7px;background:white}.google-url{display:block;max-width:470px;overflow:hidden;text-overflow:ellipsis;color:#118b77;text-decoration:none}.google-url:hover{text-decoration:underline}#google-body td{font-size:13px}@media(max-width:680px){.google-panel{padding:16px}.google-url{max-width:230px}}

@@ -6,6 +6,7 @@ import { randomBytes } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { renderMarkdown } from './admin/markdown.mjs';
+import { createGoogleSearch } from './admin/google-search.mjs';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const dataDirectory = join(root, 'admin-data');
@@ -23,6 +24,8 @@ const sites = [
   ['studio', 'studio.goodbooks.cc', '工作室'], ['type', 'type.goodbooks.cc', '排版'],
   ['terminal', 'terminal.goodbooks.cc', '终端'],
 ].map(([id, domain, label]) => ({ id, domain, label }));
+const secondary = process.env.GOODBOOKS_SECONDARY_DIR ?? join(root, '..', existsSync(join(root, '..', 'zengfanblog')) ? 'zengfanblog' : 'goodbooks-secondary-work');
+const googleSearch = createGoogleSearch({ root, secondary, dataDirectory, sites, port });
 const siteIds = new Set(sites.map(site => site.id));
 const staticFiles = new Map([
   ['/', ['admin/index.html', 'text/html; charset=utf-8']],
@@ -149,6 +152,7 @@ async function publishDraft(draft) {
     const output = await runPublisher(join(folder, 'article.json'));
     for (const entry of entries) entry.status = 'submitted';
     saveJson(historyPath, history);
+    googleSearch.afterPublish(draft.selectedSites, draft.slug);
     return { status: 200, data: { batchId, sites: draft.selectedSites, output } };
   } catch (error) {
     for (const entry of entries) { entry.status = 'needs_review'; entry.error = error.message.slice(-1000); }
@@ -163,11 +167,27 @@ const server = createServer(async (request, response) => {
   try {
     if (request.headers.host !== `127.0.0.1:${port}`) return respond(response, 403, { error: '仅允许本机访问' });
     const url = new URL(request.url, `http://127.0.0.1:${port}`);
+    if (request.method === 'GET' && url.pathname === '/api/google/callback') {
+      try {
+        await googleSearch.callback(url.searchParams);
+        return respond(response, 200, '<!doctype html><meta charset="utf-8"><title>Google 已连接</title><p>Google Search Console 已连接。正在提交 15 站地图并检查文章状态。</p><a href="/#google">返回 Goodbooks 发布后台</a>', 'text/html; charset=utf-8');
+      } catch (error) {
+        return respond(response, 400, `<!doctype html><meta charset="utf-8"><title>连接失败</title><p>${error.message.replace(/[&<>"]/g, '')}</p>`, 'text/html; charset=utf-8');
+      }
+    }
     if (request.method === 'GET' && staticFiles.has(url.pathname)) {
       const [path, type] = staticFiles.get(url.pathname);
       return respond(response, 200, readFileSync(join(root, path), 'utf8'), type);
     }
     if (request.method === 'GET' && url.pathname === '/api/config') return respond(response, 200, { sites, token });
+    if (request.method === 'GET' && url.pathname === '/api/google') return respond(response, 200, { ...googleSearch.connection(), articles: googleSearch.articles() });
+    if (request.method === 'GET' && url.pathname === '/api/google/export') {
+      const rows = googleSearch.articles();
+      const columns = ['site', 'domain', 'url', 'status', 'coverage', 'lastCrawl', 'checkedAt'];
+      const csv = [columns.join(','), ...rows.map(row => columns.map(column => `"${String(row[column] ?? '').replaceAll('"', '""')}"`).join(','))].join('\r\n');
+      response.setHeader('Content-Disposition', 'attachment; filename="goodbooks-google-articles.csv"');
+      return respond(response, 200, '\ufeff' + csv, 'text/csv; charset=utf-8');
+    }
     if (request.method === 'GET' && url.pathname === '/api/history') {
       const records = readHistory().filter(record =>
         (!url.searchParams.get('site') || record.site === url.searchParams.get('site')) &&
@@ -213,6 +233,14 @@ const server = createServer(async (request, response) => {
         const result = await publishDraft(body);
         return respond(response, result.status, result.data ?? { error: result.error });
       }
+      if (request.method === 'POST' && url.pathname === '/api/google/connect') return respond(response, 200, { url: googleSearch.authUrl() });
+      if (request.method === 'POST' && url.pathname === '/api/google/config') {
+        googleSearch.configure(body);
+        return respond(response, 200, { ok: true });
+      }
+      if (request.method === 'POST' && url.pathname === '/api/google/submit') return respond(response, 202, { job: googleSearch.start('submit', body.sites) });
+      if (request.method === 'POST' && url.pathname === '/api/google/sitemaps') return respond(response, 202, { job: googleSearch.start('sitemaps', body.sites) });
+      if (request.method === 'POST' && url.pathname === '/api/google/inspect') return respond(response, 202, { job: googleSearch.start('inspect', body.sites) });
     }
     respond(response, 404, { error: '页面不存在' });
   } catch (error) {
