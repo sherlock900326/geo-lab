@@ -128,7 +128,7 @@ async function publishDraft(draft) {
   const entries = draft.selectedSites.map(site => ({
     id: `${batchId}-${site}`, batchId, site, slug: draft.slug,
     title: draft.variants[site].title, sentAt, status: 'sending',
-    url: `https://${sites.find(item => item.id === site).domain}/posts/${draft.slug}.html`,
+    url: `https://${sites.find(item => item.id === site).domain}/posts/${draft.slug}`,
   }));
   history.unshift(...entries);
   saveJson(historyPath, history);

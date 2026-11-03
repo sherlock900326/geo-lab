@@ -51,10 +51,12 @@ let sitemap = readFileSync(join(output, 'sitemap.xml'), 'utf8');
 const indexOldDomain = site === 'home' ? 'goodbooks.cc' : oldDomain;
 index = index.replaceAll(`https://${indexOldDomain}/`, `https://${domain}/`);
 sitemap = sitemap.replaceAll(`https://${oldDomain}/`, `https://${domain}/`);
+sitemap = sitemap.replace(/(<loc>https:\/\/[^<]+\/posts\/[^<]+)\.html(<\/loc>)/g, '$1$2');
 
 for (const name of readdirSync(join(output, 'posts')).filter(name => name.endsWith('.html'))) {
   const path = join(output, 'posts', name);
-  const article = readFileSync(path, 'utf8').replaceAll(`https://${oldDomain}/`, `https://${domain}/`);
+  const article = readFileSync(path, 'utf8')
+    .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="https://${domain}/posts/${name.slice(0, -5)}">`);
   writeFileSync(path, article);
 }
 
@@ -73,7 +75,7 @@ if (existsSync(contentDirectory)) {
     const published = new Date(`${article.date}T00:00:00Z`);
     if (Number.isNaN(published.getTime()) || published.toISOString().slice(0, 10) !== article.date) throw new Error(`Invalid date: ${article.date}`);
     const displayDate = `${month.format(published)} ${published.getUTCFullYear()}`;
-    const url = `https://${domain}/posts/${slug}.html`;
+    const url = `https://${domain}/posts/${slug}`;
     const title = escapeHtml(article.title);
     const category = escapeHtml(article.category);
     const summary = escapeHtml(article.summary);
@@ -86,12 +88,13 @@ if (existsSync(contentDirectory)) {
     if (!page.includes(`<link rel="canonical" href="${url}">`)) throw new Error(`Template failed: ${site}`);
     write(`posts/${slug}.html`, page);
 
-    const card = `<a class="article-card" href="posts/${slug}.html">\n      <div class="article-date"><span class="month">${shortMonth.format(published)}</span><span class="year">${published.getUTCFullYear()}</span></div>\n      <div class="article-content"><span class="tag">${category}</span><h2>${title}</h2><p>${summary}</p><span class="read-more">Read more</span></div>\n    </a>\n\n    `;
-    if (!index.includes(`href="posts/${slug}.html"`)) index = index.replace(/(<div class="article-list">\s*)/, `$1${card}`);
+    const card = `<a class="article-card" href="posts/${slug}">\n      <div class="article-date"><span class="month">${shortMonth.format(published)}</span><span class="year">${published.getUTCFullYear()}</span></div>\n      <div class="article-content"><span class="tag">${category}</span><h2>${title}</h2><p>${summary}</p><span class="read-more">Read more</span></div>\n    </a>\n\n    `;
+    if (!index.includes(`href="posts/${slug}.html"`) && !index.includes(`href="posts/${slug}"`)) index = index.replace(/(<div class="article-list">\s*)/, `$1${card}`);
     if (!sitemap.includes(url)) sitemap = sitemap.replace('</urlset>', `  <url><loc>${url}</loc><lastmod>${article.date}</lastmod></url>\n</urlset>`);
   }
 }
 
+index = index.replace(/(href="posts\/[^"/]+)\.html(")/g, '$1$2');
 write('index.html', index);
 write('sitemap.xml', sitemap);
 if (site !== 'home') write('robots.txt', `User-agent: *\nAllow: /\nSitemap: https://${domain}/sitemap.xml\n`);

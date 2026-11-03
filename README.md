@@ -54,11 +54,11 @@ node publisher.mjs publish drafts/my-article-slug/article.json
 
 `check` 只校验；`prepare` 写入选中站点所在的仓库并在本地生成对应 `dist-*` 页面，便于预览；`publish` 再次校验、构建，只提交这篇文章在选中站点的内容文件，并推送相关仓库的 `main`。Cloudflare Pages 随后自动部署。`publish` 允许此前 `prepare` 生成的同篇内容及本机后台工具文件的未提交改动，但会拒绝其他未提交改动和暂存区中的改动。若第二个仓库推送失败，修复 Git 连接或权限后重试同一命令即可。
 
-草稿和构建目录不会进入 Git。正式文章内容保存在各站的 `content/<site>/<slug>.json`。新文章会出现在各站首页和 sitemap 中，URL 是 `https://<domain>/posts/<slug>.html`。
+草稿和构建目录不会进入 Git。正式文章内容保存在各站的 `content/<site>/<slug>.json`。新文章会出现在各站首页和 sitemap 中，对外 URL 是 `https://<domain>/posts/<slug>`（旧的 `.html` 地址会跳转到该地址）。
 
 ## Google 收录
 
-各站构建时会自动更新自己的 `sitemap.xml`，新文章的页面会包含指向本站网址的 canonical 标签；每个站点的 `robots.txt` 也会指向自己的 sitemap。总站另有 `https://goodbooks.cc/sitemap-index.xml`，汇总 15 个站点的 sitemap。发布新文章后，无需逐篇重复提交 sitemap。
+各站构建时会自动更新自己的 `sitemap.xml`，新文章的页面会包含指向本站最终网址的 canonical 标签；每个站点的 `robots.txt` 也会指向自己的 sitemap。总站另有 `https://goodbooks.cc/sitemap-index.xml`，汇总 15 个站点的 sitemap。发布新文章后，无需逐篇重复提交 sitemap。
 
 首次接入时，在自己的 Google Search Console 中添加 `goodbooks.cc` **网域资源**，按 Google 给出的 TXT 记录完成 DNS 所有权验证，然后提交 `https://goodbooks.cc/sitemap-index.xml`。网域资源覆盖总站及其子域名。如果已经有 URL 前缀资源，也可以分别提交各站的 `https://<域名>/sitemap.xml`。这个 Google 账号验证和 sitemap 提交需要站点所有者完成；本机发布工具没有你的 Google 登录权限。
 

@@ -274,7 +274,7 @@ async function refreshHistory() {
     for (const record of records) {
       const row = create('tr');
       const article = create('td');
-      article.append(create('span', 'table-title', record.title), create('span', 'table-sub', `/posts/${record.slug}.html`));
+      article.append(create('span', 'table-title', record.title), create('span', 'table-sub', `/posts/${record.slug}`));
       const site = create('td'); site.append(externalLink(`https://${domain(record.site)}/`, domain(record.site) + ' ↗', 'domain-chip domain-link'));
       const status = create('td'); status.append(create('span', `status ${record.status}`, statusLabel(record.status)));
       const linkCell = create('td');
